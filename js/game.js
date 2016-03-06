@@ -18,12 +18,8 @@ var highlights = [];
 var chess;
 var blackPieceMaterial;
 var whitePieceMaterial;
-var whiteCapturablePositions = [];
-var whiteCanCapture = false;
-var whiteEnPassant = false;
-var blackCapturablePositions = [];
-var blackCanCapture = false;
-var blackEnPassant = false;
+var chosenPromotion = 'q';
+
 
 //configuráveis
 var texture = localStorage.getItem("texture") === null ? "standard" : localStorage.getItem("texture"); //definir no menu principal
@@ -95,7 +91,6 @@ function createScene() {
 
 	scene.onPointerDown = function(evt, pickResult) {
 
-		//if (pickResult.hit && chess.turn() === 'w') {
 		if (pickResult.hit && !chess.game_over()) {
 
 			var clickedMesh = pickResult.pickedMesh;
@@ -104,15 +99,17 @@ function createScene() {
 
 				case "highlight":
 
-					var pieceName = selectedPieceType.slice(1);
-					var movingPlayer = selectedPieceType.charAt(0);
-
+					
 					//encontrar a posicao do highlight
 					//mover a peça para o highlight com animacao
 					originSquare = coordsToPosition(selectedPiece.position);
 					var pastX = selectedPiece.position.x;
 					var pastZ = selectedPiece.position.z;
 					destinationSquare = coordsToPosition(clickedMesh.position);
+
+					//captura comum
+
+
 					selectedPiece.position.x = clickedMesh.position.x;
 					selectedPiece.position.z = clickedMesh.position.z;
 					var promotionX = clickedMesh.position.x;
@@ -128,7 +125,7 @@ function createScene() {
 
 							var castlingCoords = positionToCoords('a1', "rook");
 
-							if (scene.meshes[meshID].position.x === castlingCoords.x && scene.meshes[meshID].position.y === castlingCoords.y && scene.meshes[meshID].position.z === castlingCoords.z) {
+							if (scene.meshes[meshID].position.equals(castlingCoords)) {
 
 								
 								var rookNewPosition = positionToCoords('d1', "rook");
@@ -152,7 +149,7 @@ function createScene() {
 						for (var meshID = 0; meshID < scene.meshes.length; meshID++) {
 
 							var castlingCoords = positionToCoords('h1', "rook");
-							if (scene.meshes[meshID].position.x === castlingCoords.x && scene.meshes[meshID].position.y === castlingCoords.y && scene.meshes[meshID].position.z === castlingCoords.z) {
+							if (scene.meshes[meshID].position.equals(castlingCoords)) {
 
 								var rookNewPosition = positionToCoords('f1', "rook");
 								scene.meshes[meshID].position.x = rookNewPosition.x;
@@ -176,7 +173,7 @@ function createScene() {
 
 							var castlingCoords = positionToCoords('a8', "rook");
 
-							if (scene.meshes[meshID].position.x === castlingCoords.x && scene.meshes[meshID].position.y === castlingCoords.y && scene.meshes[meshID].position.z === castlingCoords.z) {
+							if (scene.meshes[meshID].position.equals(castlingCoords)) {
 
 								
 								var rookNewPosition = positionToCoords('d8', "rook");
@@ -200,7 +197,7 @@ function createScene() {
 						for (var meshID = 0; meshID < scene.meshes.length; meshID++) {
 
 							var castlingCoords = positionToCoords('h8', "rook");
-							if (scene.meshes[meshID].position.x === castlingCoords.x && scene.meshes[meshID].position.y === castlingCoords.y && scene.meshes[meshID].position.z === castlingCoords.z) {
+							if (scene.meshes[meshID].position.equals(castlingCoords)) {
 
 								var rookNewPosition = positionToCoords('f8', "rook");
 								scene.meshes[meshID].position.x = rookNewPosition.x;
@@ -214,11 +211,23 @@ function createScene() {
 
 					}
 
-					chess.move({from: originSquare, to: destinationSquare});
+					chess.move({from: originSquare, to: destinationSquare, promotion: chosenPromotion});
+
+					//captura comum
+					for (var meshID = 0; meshID < scene.meshes.length; meshID++) {
+						var cantBeDeleted = [selectedPiece.name, "Chess Board", "highlight"];
+						if(cantBeDeleted.indexOf(scene.meshes[meshID].name) === -1 && scene.meshes[meshID].position.x === clickedMesh.position.x && scene.meshes[meshID].position.z === clickedMesh.position.z) {
+
+							console.log(scene.meshes[meshID].name);
+							scene.meshes[meshID].dispose();
+
+						}
+
+					}		
 
 					//captura en passant
 
-					if (whiteEnPassant || blackEnPassant) {
+					if (selectedPieceType.slice(1) === "pawn" && pastX != promotionX) {
 
 						if (pastX != promotionX) {
 
@@ -252,8 +261,6 @@ function createScene() {
 
 					if (destinationSquare.charAt(1) === '8' && selectedPieceType === "Wpawn"){
 
-						moveToDo = destinationSquare.charAt(0) + "8=Q+";
-						chess.move(moveToDo);
 						var promotedQueen = BABYLON.SceneLoader.ImportMesh("Cylinder", "models/", "rainha.babylon", scene, function(newMeshes) {
 							promotedQueen = newMeshes[0];
 							promotedQueen.name = "Wqueen";
@@ -305,665 +312,59 @@ function createScene() {
 					selectedPiece = null;
 					selectedPieceType = null;
 
-					if (movingPlayer = "W") {
-
-						whiteCanCapture = false;
-						whiteCapturablePositions = [];
-						whiteEnPassant = false;
-					}
-
-					
-					
-					
-
-
 					break;
 
 				case "Chess Board":
 
 					break;
 
-				case "Wpawn":
+				default:
 
-					if (chess.turn() === 'w'){
-						//armazenar a peça clicada
-						selectedPiece = clickedMesh;
-						selectedPieceType = "Wpawn";
-						whiteEnPassant = false;
+					//armazenar a peça clicada
 
-
-						if(selectedPiece != null) { //se havia outra peça selecionada
-
-							//remover highlights
-
-							for (var i = 0; i < highlights.length; i++){
-
-								highlights[i].dispose();
-
-							}
-
-						}
+					selectedPiece = clickedMesh;
+					selectedPieceType = clickedMesh.name;;
 
 
-						legalMoves = chess.moves({square: coordsToPosition(selectedPiece.position)});
+					//remover highlights anteriores
 
-						for (var elem = 0; elem < legalMoves.length; elem++){
+					for (var i = 0; i < highlights.length; i++){
 
-							var thisMoveCanCapture = false;
-
-							if (legalMoves[elem].indexOf('x') != -1){
-
-								thisMoveCanCapture = true;
-
-							}						
-
-							legalMoves[elem] = legalMoves[elem].replace('x', ''); //caractere de captura
-							legalMoves[elem] = legalMoves[elem].replace('=', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('Q', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('R', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('B', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('N', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('+', ''); //movimento vai fazer xeque
-
-							if (legalMoves[elem].length === 3) {
-								legalMoves[elem] = legalMoves[elem].slice(1); //tira coluna que não é o destino
-							}
-
-							if (thisMoveCanCapture) {
-								whiteCapturablePositions.push(legalMoves[elem]); //insere posições passíveis de captura
-								whiteCanCapture = true;
-							}						
-
-
-						}						
-
-						//verifica se uma captura en passant é possível
-
-						var fenToCheck = chess.fen();
-						whiteEnPassant = (fenToCheck.indexOf("-") === -1);
-
-
-						for (var pos = 0; pos < legalMoves.length; pos++) {
-							generateHighlight(legalMoves[pos], scene);
-
-						}
+						highlights[i].dispose();
 
 					}
 
-					else {
-						//capturar
+					var legalMoves = chess.moves({square: coordsToPosition(selectedPiece.position)});
 
-						if(blackCanCapture) {
+					for (var elem = 0; elem < legalMoves.length; elem++){		
 
-							positionToCapture = coordsToPosition(clickedMesh.position);
+						if(legalMoves[elem] === "O-O" || legalMoves[elem] === "O-O-O") continue;
 
-							//se a posição estiver nas posições capturáveis
+						temp1 = legalMoves[elem].slice(0, legalMoves[elem].length - 1)
 
-							if (blackCapturablePositions.indexOf(positionToCapture) != -1) {
+						legalMoves[elem] = legalMoves[elem].replace('x', ''); //caractere de captura
+						legalMoves[elem] = legalMoves[elem].replace('=', ''); //caractere de promoção
+						legalMoves[elem] = legalMoves[elem].replace('Q', ''); //caractere de promoção
+						legalMoves[elem] = legalMoves[elem].replace('R', ''); //caractere de promoção
+						legalMoves[elem] = legalMoves[elem].replace('B', ''); //caractere de promoção
+						legalMoves[elem] = legalMoves[elem].replace('N', ''); //caractere de promoção
+						legalMoves[elem] = legalMoves[elem].replace('+', ''); //movimento vai fazer xeque
 
-								//executa a captura
-								var pastPosition = new BABYLON.Vector3(0, 0, 0);
-								pastPosition.x = selectedPiece.position.x;
-								pastPosition.z = selectedPiece.position.z;
-								var pastSquare = coordsToPosition(pastPosition);
-
-								selectedPiece.position.x = clickedMesh.position.x;
-								selectedPiece.position.z = clickedMesh.position.z;
-								var futureSquare = coordsToPosition(selectedPiece.position);
-								clickedMesh.dispose();
-
-								
-								chess.move({from: pastSquare, to: futureSquare});
-
-
-								for (var i = 0; i < highlights.length; i++){
-
-									highlights[i].dispose();
-
-								}
-
-							}
-
-
+						if (legalMoves[elem].length === 3) {
+							legalMoves[elem] = legalMoves[elem].slice(1); //tira coluna que não é o destino
 						}
 
+					}						
 
-					}
-
-					break;
-
-				case "Bpawn":
-
-					if (chess.turn() === 'b'){
-						//armazenar a peça clicada
-						selectedPiece = clickedMesh;
-						selectedPieceType = "Bpawn";
-						blackEnPassant = false;
-
-
-						if(selectedPiece != null) { //se havia outra peça selecionada
-
-							//remover highlights
-
-							for (var i = 0; i < highlights.length; i++){
-
-								highlights[i].dispose();
-
-							}
-
-						}
-
-
-						legalMoves = chess.moves({square: coordsToPosition(selectedPiece.position)});
-
-						for (var elem = 0; elem < legalMoves.length; elem++){
-
-							var thisMoveCanCapture = false;
-
-							if (legalMoves[elem].indexOf('x') != -1){
-
-								thisMoveCanCapture = true;
-
-							}						
-
-							legalMoves[elem] = legalMoves[elem].replace('x', ''); //caractere de captura
-							legalMoves[elem] = legalMoves[elem].replace('=', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('Q', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('R', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('B', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('N', ''); //caractere de promoção
-							legalMoves[elem] = legalMoves[elem].replace('+', ''); //movimento vai fazer xeque
-
-							if (legalMoves[elem].length === 3) {
-								legalMoves[elem] = legalMoves[elem].slice(1); //tira coluna que não é o destino
-							}
-
-							if (thisMoveCanCapture) {
-								blackCapturablePositions.push(legalMoves[elem]); //insere posições passíveis de captura
-								blackCanCapture = true;
-							}						
-
-
-						}						
-
-						//verifica se uma captura en passant é possível
-
-						var fenToCheck = chess.fen();
-						blackEnPassant = (fenToCheck.indexOf("-") === -1);
-
-
-						for (var pos = 0; pos < legalMoves.length; pos++) {
-							generateHighlight(legalMoves[pos], scene);
-
-						}
-
-					}
-
-					else {
-
-						if(whiteCanCapture) {
-
-							positionToCapture = coordsToPosition(clickedMesh.position);
-
-							//se a posição estiver nas posições capturáveis
-
-							if (whiteCapturablePositions.indexOf(positionToCapture) != -1) {
-
-								//executa a captura
-								var pastPosition = new BABYLON.Vector3(0, 0, 0);
-								pastPosition.x = selectedPiece.position.x;
-								pastPosition.z = selectedPiece.position.z;
-								var pastSquare = coordsToPosition(pastPosition);
-
-								selectedPiece.position.x = clickedMesh.position.x;
-								selectedPiece.position.z = clickedMesh.position.z;
-								var futureSquare = coordsToPosition(selectedPiece.position);
-								clickedMesh.dispose();
-
-								
-								chess.move({from: pastSquare, to: futureSquare});
-
-
-								for (var i = 0; i < highlights.length; i++){
-
-									highlights[i].dispose();
-
-								}
-
-							}
-
-
-						}
-
-
-
-					}
-
-					break;					
-
-				case "Wking":
-
-					if (chess.turn() === 'w') {
-
-						if(clickedMesh.name.charAt(0) === "W") {
-
-							selectedPiece = clickedMesh;
-							selectedPieceType = clickedMesh.name;
-
-							whiteCanCapture = false;
-
-							whiteCapturablePositions = [];
-
-							whiteEnPassant = false;
-
-							if(selectedPiece != null) { //se havia outra peça selecionada
-
-								//remover highlights
-
-								for (var i = 0; i < highlights.length; i++){
-
-									highlights[i].dispose();
-
-								}
-
-							}
-
-							var suppressedChar;
-
-							suppressedChar = selectedPieceType.charAt(1).toUpperCase();
-
-							legalMoves = chess.moves({square: coordsToPosition(selectedPiece.position)});
-
-							for (var elem = 0; elem < legalMoves.length; elem++){
-
-								var thisMoveCanCapture = false;
-
-								if (legalMoves[elem].indexOf('x') != -1){
-
-									thisMoveCanCapture = true;
-
-								}
-
-								if(legalMoves[elem] === "O-O" || legalMoves[elem] === "O-O-O") {
-
-									continue;
-
-								}
-
-								legalMoves[elem] = legalMoves[elem].replace(suppressedChar, '');
-								legalMoves[elem] = legalMoves[elem].replace('x', ''); //caractere de captura
-								legalMoves[elem] = legalMoves[elem].replace('+', ''); //movimento vai fazer xeque
-								slice1 = legalMoves[elem].slice(0, legalMoves[elem].length - 1); //sem ultimo caractere
-								slice2 = legalMoves[elem].charAt(legalMoves[elem].length - 1); //último caractere
-
-								slice1 = slice1.replace(/[1-8]/g, '');
-
-								legalMoves[elem] = slice1 + slice2;
-
-								//remover letra da coluna que não é o destino
-								if (legalMoves[elem].length === 3 && selectedPieceType === 'Wking') {
-									if (legalMoves[elem] != "O-O" || legalMoves[elem] != "O-O-O"){
-										legalMoves[elem] = legalMoves[elem].slice(1);
-									}
-								}
-
-								if (thisMoveCanCapture) {
-									whiteCapturablePositions.push(legalMoves[elem]);
-									whiteCanCapture = true;
-								}
-
-							}
-
-							for (var pos = 0; pos < legalMoves.length; pos++) {
-
-								if(legalMoves[pos] === "O-O") {
-									generateHighlight("g1", scene); //roque
-								}
-
-								if(legalMoves[pos] === "O-O-O") {
-									generateHighlight("c1", scene); //roque
-								}							
-								
-								else{
-									generateHighlight(legalMoves[pos], scene);
-								}
-							}
-
-						}
-					}
-					break;
-
-				case "Bking":
-
-					if (chess.turn() === 'b') {
-
-						if(clickedMesh.name.charAt(0) === "B") {
-
-							selectedPiece = clickedMesh;
-							selectedPieceType = clickedMesh.name;
-
-							blackCanCapture = false;
-
-							blackCapturablePositions = [];
-
-							blackEnPassant = false;
-
-							if(selectedPiece != null) { //se havia outra peça selecionada
-
-								//remover highlights
-
-								for (var i = 0; i < highlights.length; i++){
-
-									highlights[i].dispose();
-
-								}
-
-							}
-
-							var suppressedChar;
-
-							suppressedChar = selectedPieceType.charAt(1).toUpperCase();
-							
-
-							legalMoves = chess.moves({square: coordsToPosition(selectedPiece.position)});
-
-							for (var elem = 0; elem < legalMoves.length; elem++){
-
-								var thisMoveCanCapture = false;
-
-								if (legalMoves[elem].indexOf('x') != -1){
-
-									thisMoveCanCapture = true;
-
-								}
-
-								if(legalMoves[elem] === "O-O" || legalMoves[elem] === "O-O-O") {
-
-									continue;
-
-								}
-
-								legalMoves[elem] = legalMoves[elem].replace(suppressedChar, '');
-								legalMoves[elem] = legalMoves[elem].replace('x', ''); //caractere de captura
-								legalMoves[elem] = legalMoves[elem].replace('+', ''); //movimento vai fazer xeque
-								slice1 = legalMoves[elem].slice(0, legalMoves[elem].length - 1); //sem ultimo caractere
-								slice2 = legalMoves[elem].charAt(legalMoves[elem].length - 1); //último caractere
-
-								slice1 = slice1.replace(/[1-8]/g, '');
-
-								legalMoves[elem] = slice1 + slice2;
-
-								//remover letra da coluna que não é o destino
-								if (legalMoves[elem].length === 3 && selectedPieceType === 'Bking') {
-									if (legalMoves[elem] != "O-O" || legalMoves[elem] != "O-O-O"){
-										legalMoves[elem] = legalMoves[elem].slice(1);
-									}
-								}
-
-								if (thisMoveCanCapture) {
-									blackCapturablePositions.push(legalMoves[elem]);
-									blackCanCapture = true;
-								}
-
-							}
-
-							for (var pos = 0; pos < legalMoves.length; pos++) {
-
-								if(legalMoves[pos] === "O-O") {
-									generateHighlight("g8", scene); //roque
-								}
-
-								if(legalMoves[pos] === "O-O-O") {
-									generateHighlight("c8", scene); //roque
-								}							
-								
-								else{
-									generateHighlight(legalMoves[pos], scene);
-								}
-							}
-
-						}
-					}
-					break;					
-
-
-				default: //outros tipos de peça
-
-					if(clickedMesh.name.charAt(0) === "W") {
-
-						if (chess.turn() === "w") {
-							selectedPiece = clickedMesh;
-							selectedPieceType = clickedMesh.name;
-
-							whiteCanCapture = false;
-
-							whiteCapturablePositions = [];
-
-							whiteEnPassant = false;
-
-							if(selectedPiece != null) { //se havia outra peça selecionada
-
-								//remover highlights
-
-								for (var i = 0; i < highlights.length; i++){
-
-									highlights[i].dispose();
-
-								}
-
-							}
-
-							var suppressedChar;
-
-							if (selectedPieceType === "Wknight") {
-								suppressedChar = 'N';
-							}
-
-							else {
-								suppressedChar = selectedPieceType.charAt(1).toUpperCase();
-							}
-
-							legalMoves = chess.moves({square: coordsToPosition(selectedPiece.position)});
-
-							for (var elem = 0; elem < legalMoves.length; elem++){
-
-								var thisMoveCanCapture = false;
-
-								if (legalMoves[elem].indexOf('x') != -1){
-
-									thisMoveCanCapture = true;
-
-								}
-
-
-								legalMoves[elem] = legalMoves[elem].replace(suppressedChar, '');
-								legalMoves[elem] = legalMoves[elem].replace('x', ''); //caractere de captura
-								legalMoves[elem] = legalMoves[elem].replace('+', ''); //movimento vai fazer xeque
-								slice1 = legalMoves[elem].slice(0, legalMoves[elem].length - 1); //sem ultimo caractere
-								slice2 = legalMoves[elem].charAt(legalMoves[elem].length - 1); //último caractere
-
-								slice1 = slice1.replace(/[1-8]/g, '');
-
-								legalMoves[elem] = slice1 + slice2;
-
-								//remover letra da coluna que não é o destino
-								if (legalMoves[elem].length === 3) {
-									
-									legalMoves[elem] = legalMoves[elem].slice(1);
-								
-								}
-
-								if (thisMoveCanCapture) {
-									whiteCapturablePositions.push(legalMoves[elem]);
-									whiteCanCapture = true;
-								}
-
-							}
-
-							for (var pos = 0; pos < legalMoves.length; pos++) {					
-								
-
-								generateHighlight(legalMoves[pos], scene);
-								
-							}		
-						}			
-
-					}
-
-					if(clickedMesh.name.charAt(0) === "B") {
+					//gera posições válidas
+					for (var pos = 0; pos < legalMoves.length; pos++) {
 						
-						if (chess.turn() === 'b') {
-
-							selectedPiece = clickedMesh;
-							selectedPieceType = clickedMesh.name;
-
-							blackCanCapture = false;
-
-							blackCapturablePositions = [];
-
-							blackEnPassant = false;
-
-							if(selectedPiece != null) { //se havia outra peça selecionada
-
-								//remover highlights
-
-								for (var i = 0; i < highlights.length; i++){
-
-									highlights[i].dispose();
-
-								}
-
-							}
-
-							var suppressedChar;
-
-							if (selectedPieceType === "Bknight") {
-								suppressedChar = 'N';
-							}
-
-							else {
-								suppressedChar = selectedPieceType.charAt(1).toUpperCase();
-							}
-
-							legalMoves = chess.moves({square: coordsToPosition(selectedPiece.position)});
-
-							for (var elem = 0; elem < legalMoves.length; elem++){
-
-								var thisMoveCanCapture = false;
-
-								if (legalMoves[elem].indexOf('x') != -1){
-
-									thisMoveCanCapture = true;
-
-								}
-
-
-								legalMoves[elem] = legalMoves[elem].replace(suppressedChar, '');
-								legalMoves[elem] = legalMoves[elem].replace('x', ''); //caractere de captura
-								legalMoves[elem] = legalMoves[elem].replace('+', ''); //movimento vai fazer xeque
-								slice1 = legalMoves[elem].slice(0, legalMoves[elem].length - 1); //sem ultimo caractere
-								slice2 = legalMoves[elem].charAt(legalMoves[elem].length - 1); //último caractere
-
-								slice1 = slice1.replace(/[1-8]/g, '');
-
-								legalMoves[elem] = slice1 + slice2;
-
-								//remover letra da coluna que não é o destino
-								if (legalMoves[elem].length === 3) {
-									
-									legalMoves[elem] = legalMoves[elem].slice(1);
-								
-								}
-
-								if (thisMoveCanCapture) {
-									blackCapturablePositions.push(legalMoves[elem]);
-									blackCanCapture = true;
-								}
-
-							}
-
-							for (var pos = 0; pos < legalMoves.length; pos++) {					
-								
-
-								generateHighlight(legalMoves[pos], scene);
-								
-							}	
-						}				
-
-					}					
-
-					//captura comum
-					if(clickedMesh.name.charAt(0) === "B" && clickedMesh.name.slice(1, clickedMesh.name.size) != "king" && whiteCanCapture) {
-
-						positionToCapture = coordsToPosition(clickedMesh.position);
-
-						//se a posição estiver nas posições capturáveis
-
-						if (whiteCapturablePositions.indexOf(positionToCapture) != -1) {
-
-							//executa a captura
-							var pastPosition = new BABYLON.Vector3(0, 0, 0);
-							pastPosition.x = selectedPiece.position.x;
-							pastPosition.z = selectedPiece.position.z;
-							var pastSquare = coordsToPosition(pastPosition);
-
-							selectedPiece.position.x = clickedMesh.position.x;
-							selectedPiece.position.z = clickedMesh.position.z;
-							var futureSquare = coordsToPosition(selectedPiece.position);
-							clickedMesh.dispose();
-
-							
-							chess.move({from: pastSquare, to: futureSquare});
-
-
-							for (var i = 0; i < highlights.length; i++){
-
-								highlights[i].dispose();
-
-							}
-
-						}
-
+						generateHighlight(legalMoves[pos], scene);
 
 					}
 
-					if(clickedMesh.name.charAt(0) === "W" && clickedMesh.name.slice(1, clickedMesh.name.size) != "king" && blackCanCapture) {
-
-						positionToCapture = coordsToPosition(clickedMesh.position);
-
-						//se a posição estiver nas posições capturáveis
-
-						if (blackCapturablePositions.indexOf(positionToCapture) != -1) {
-
-							//executa a captura
-							var pastPosition = new BABYLON.Vector3(0, 0, 0);
-							pastPosition.x = selectedPiece.position.x;
-							pastPosition.z = selectedPiece.position.z;
-							var pastSquare = coordsToPosition(pastPosition);
-
-							selectedPiece.position.x = clickedMesh.position.x;
-							selectedPiece.position.z = clickedMesh.position.z;
-							var futureSquare = coordsToPosition(selectedPiece.position);
-							
-							clickedMesh.dispose();
-							
-
-							
-							chess.move({from: pastSquare, to: futureSquare});
-
-
-							for (var i = 0; i < highlights.length; i++){
-
-								highlights[i].dispose();
-
-							}
-
-						}
-
-
-					}					
-
 					break;
+
 			}
 
 			if(chess.game_over()) {
@@ -1276,17 +677,44 @@ function createChessSet(texture, scene) {
 
 function generateHighlight(pos, scene){
 
-	var highlight = BABYLON.Mesh.CreateGround("highlight", 1.125, 1.125, 1, scene, true);
+	if (pos === "O-O") {
+
+		pos = chess.turn() === 'w' ? "g1" : "g8";
+
+	}
+
+	else if (pos === "O-O-O") {
+
+		pos = chess.turn() === 'w' ? "c1" : "c8";
+
+	}
+
+
+
+
+	var highlight = BABYLON.Mesh.CreateCylinder("highlight", 1.0, 1.125, 1.125, 6, 1, scene, true);
 	highlight.material = new BABYLON.StandardMaterial("highlightmat", scene);
-	//highlight.material.emissiveTexture = new BABYLON.Texture("textures/green-metal.jpg", scene);
 	highlight.material.emissiveColor = new BABYLON.Color3(0.5, 1.0, 0.5);
 	highlight.material.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
 	highlight.material.diffuseColor = new BABYLON.Color3(0.0, 0.0, 0.0);
-	highlight.material.alpha = 0.5;
+	highlight.material.alpha = 0.0;
 	highlight.position.x = REFERENCE_POSITION.x + COLUMNS.indexOf(pos.charAt(0)) * 1.125;
-	highlight.position.y = 0.05;
+	highlight.position.y = 0.5;
 	highlight.position.z = REFERENCE_POSITION.z + ( ( + pos.charAt(1)) - 1) * 1.125;
 	highlights.push(highlight);
+
+
+	var highlight2 = BABYLON.Mesh.CreateGround("highlight", 1.125, 1.125, 1, scene, true);
+	highlight2.material = new BABYLON.StandardMaterial("highlightmat", scene);
+	highlight2.material.emissiveColor = new BABYLON.Color3(0.5, 1.0, 0.5);
+	highlight2.material.specularColor = new BABYLON.Color3(0.0, 0.0, 0.0);
+	highlight2.material.diffuseColor = new BABYLON.Color3(0.0, 0.0, 0.0);
+	highlight2.material.alpha = 0.5;
+	highlight2.position.x = REFERENCE_POSITION.x + COLUMNS.indexOf(pos.charAt(0)) * 1.125;
+	highlight2.position.y = 0.05;
+	highlight2.position.z = REFERENCE_POSITION.z + ( ( + pos.charAt(1)) - 1) * 1.125;
+	highlights.push(highlight2);
+
 }
 
 //Vector3 de posição -> posição na notação do xadrez
@@ -1356,11 +784,11 @@ function endGame() {
 		}
 	}
 
-	else if (condition === 'stalemate'){
+	else if (chess.in_stalemate()){
 		swal({   title: "Rei Afogado",   text: "Fim de jogo! O rei branco está afogado, sem poder ser capturado ou fugir sem ser capturado... \n \n Se quiser jogar outra partida, basta atualizar a página.",   imageUrl: "images/thumbs-down.jpg" });
 	}
 
-	else if (chess.in_draw === true) {
+	else if (chess.in_draw()) {
 		if (chess.insufficient.material() ) {
 			
 			swal({   title: "Empate!",   text: "Nenhum dos lados possui peças suficientes para um xeque-mate! \n \n Se quiser jogar outra partida, basta atualizar a página.",   imageUrl: "images/thumbs-down.jpg" });
