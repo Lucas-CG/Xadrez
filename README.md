@@ -1,6 +1,7 @@
 # Xadrez
 Jogo de xadrez para dois jogadores, feito em Javascript. Projeto final de Computação Gráfica na Universidade Federal do Rio de Janeiro (2015.2).
 
+Você pode jogá-lo clicando <a href = "http://lucas-cg.github.io/Xadrez/">AQUI</a>.
 
 <strong>Instruções de utilização:</strong>
 
