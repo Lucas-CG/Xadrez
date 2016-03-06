@@ -774,7 +774,7 @@ function positionToCoords(position, piece) {
 function endGame() {
 
 	if (chess.in_checkmate()) {
-		if(chess.fen().indexOf('w') != -1) {
+		if(chess.turn() === 'w') {
 			
 			swal({   title: "Xeque-Mate!",   text: "O rei branco foi capturado! \n \n Se quiser jogar outra partida, basta atualizar a página.",   imageUrl: "images/thumbs-up.jpg" });
 		}
@@ -785,7 +785,14 @@ function endGame() {
 	}
 
 	else if (chess.in_stalemate()){
-		swal({   title: "Rei Afogado",   text: "Fim de jogo! O rei branco está afogado, sem poder ser capturado ou fugir sem ser capturado... \n \n Se quiser jogar outra partida, basta atualizar a página.",   imageUrl: "images/thumbs-down.jpg" });
+		
+		if(chess.turn() === 'w') {
+			swal({   title: "Rei Afogado",   text: "Fim de jogo! O rei branco está afogado, sem poder ser capturado ou fugir sem ser capturado... \n \n Se quiser jogar outra partida, basta atualizar a página.",   imageUrl: "images/thumbs-down.jpg" });
+		}
+		
+		else {
+			swal({   title: "Rei Afogado",   text: "Fim de jogo! O rei preto está afogado, sem poder ser capturado ou fugir sem ser capturado... \n \n Se quiser jogar outra partida, basta atualizar a página.",   imageUrl: "images/thumbs-down.jpg" });
+		}		
 	}
 
 	else if (chess.in_draw()) {
