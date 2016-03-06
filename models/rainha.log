@@ -1,0 +1,22 @@
+	Exporter version: 4.4.1, Blender version: 2.76 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  false
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  C:\Users\Lucas\Documents\ECI UFRJ\6º Período\Computação Gráfica\Trabalhos\Xadrez\app\models\
+	Python World class constructor completed
+	processing begun of mesh:  Cylinder
+		WARNING: No materials have been assigned: 
+		num positions      :  1848
+		num normals        :  1848
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  6756
+	processing begun of camera (FreeCamera):  Camera
+	processing begun of light (POINT):  Lamp
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.0931 secs
