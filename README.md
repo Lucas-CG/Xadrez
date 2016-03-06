@@ -7,8 +7,6 @@ Você pode jogá-lo clicando <a href = "http://lucas-cg.github.io/Xadrez/">AQUI<
 
 Se você quiser baixar os arquivos e executá-lo localmente, será necessário carregar o jogo em um servidor Web, pois o aplicativo carrega texturas e modelos 3D dinamicamente
 
-O aplicativo carrega texturas e modelos 3D dinamicamente, logo ele deve ser carregado em um servidor Web para ser jogado, caso você prefire baixar os arquivos e executá-lo localmente.
-
 <h2>Controles</h2>
 <ul>
   <li>Clicar em uma peça: mostra movimentos disponíveis</li>
