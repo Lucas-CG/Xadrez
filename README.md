@@ -1,5 +1,6 @@
 # Xadrez
-Jogo de xadrez para dois jogadores, feito em Javascript. Projeto final de Computação Gráfica na UFRJ (2015.2).
+Jogo de xadrez para dois jogadores, feito em Javascript. Projeto final de Computação Gráfica na Universidade Federal do Rio de Janeiro (2015.2).
+
 
 <strong>Instruções de utilização:</strong>
 
